@@ -178,7 +178,7 @@ def name_replacer(text):
     return text
 '''
 
-def generate_voice(text, speaker, auto_regressive_samples=2, diffusion_iterations=50, cond_free=True, temperature=2, top_p=0.0, length_penalty=8, repetition_penalty=4, breathing_room=20):
+def generate_voice(text, speaker, auto_regressive_samples=16, diffusion_iterations=50, cond_free=True, temperature=2, top_p=0.0, length_penalty=8, repetition_penalty=4, breathing_room=20):
     set_all_seeds(seed)
     
     print(f'Speaker: {speaker}, Text: {text}')
