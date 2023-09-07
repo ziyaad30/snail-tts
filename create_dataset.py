@@ -1,4 +1,5 @@
 import os
+import zipfile
 import time
 import anyio
 import random
@@ -44,6 +45,18 @@ def set_all_seeds(seed):
   torch.manual_seed(seed)
   torch.cuda.manual_seed(seed)
   torch.backends.cudnn.deterministic = True
+
+def zip_datset(iter):
+    name = '/content/snail-tts/dataset'
+    zip_name = name + '.zip'
+    with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zip_ref:
+        for folder_name, subfolders, filenames in os.walk(name):
+            for filename in filenames:
+                file_path = os.path.join(folder_name, filename)
+                zip_ref.write(file_path, arcname=os.path.relpath(file_path, name))
+    
+    zip_ref.close()
+    print(f'Dataset saved at : {iter} wavs')
 
 def create_edit_train_file(wav_path, speaker_id, text):
     
@@ -106,11 +119,15 @@ def save_dataset(audio_array, text, speaker):
     
     create_edit_train_file(processed_path, str(speaker_id), text)
 
+    if j % zip_interval == 0:
+            zip_datset(j)
+
 tts = TextToSpeech()
 if not os.path.exists(f"dataset"):
     os.makedirs(f"dataset")
 
 print("Tortoise loaded.")
+zip_interval = 0
 
 # List of (regular expression, replacement) pairs for abbreviations:
 _abbreviations = [(re.compile('\\b%s\\.' % x[0], re.IGNORECASE), x[1]) for x in [
@@ -155,29 +172,14 @@ def ordinal_dates(text):
         text = text.replace(rs, rss)
     return text
 
-'''
-def name_replacer(text):
+
+def english_text(text):
+    text = ordinal_dates(text)
     text = lowercase(text)
     text = expand_abbreviations(text)
-    text = text.replace("ruggiero", "rujero")
-    text = text.replace("bufalino", "buffalino")
-    text = text.replace("genovese", "gɛnoviz")
-    text = text.replace("apalachin", "apalaykin")
-    text = text.replace("stefano", "stɛfɛnoʊ")
-    text = text.replace("capo", "kapo")
-    text = text.replace("decicco", "de chicco")
-    text = text.replace("giuseppe", "jewseppe")
-    text = text.replace("luciano", "lewcheeyano")
-    text = text.replace("ANC", "A N C")
-    text = text.replace("riina", "rina")
-    text = text.replace("leggio", "lejio")
-    text = text.replace("meyer", "maiyer")
-    text = text.replace("salvatore", "salvator")
-    text = text.replace("buscetta", "Bushetta")
-    text = text.replace("stand-in", "standin")
-    text = text.replace("u.s.", "u s")
+    text = expand_numbers(text)
     return text
-'''
+
 
 def generate_voice(text, speaker, auto_regressive_samples=32, diffusion_iterations=50, cond_free=True, temperature=2, top_p=0.0, length_penalty=8, repetition_penalty=4, breathing_room=20):
     set_all_seeds(seed)
@@ -187,12 +189,8 @@ def generate_voice(text, speaker, auto_regressive_samples=32, diffusion_iteratio
     
     voice_samples, conditioning_latents = load_voice(speaker)
     
-    text = ordinal_dates(text)
-    text = expand_numbers(text)
-
-    talk_text = text
+    talk_text = english_text(text)
     
-    # talk_text = name_replacer(text)
     print(f'Speaker: {speaker}, Text: {talk_text}')
     
     gen, dbg_state = tts.tts_with_preset(talk_text, 
@@ -211,8 +209,10 @@ def generate_voice(text, speaker, auto_regressive_samples=32, diffusion_iteratio
 
 
 def main(speakers_list):
-    # speakers_list = [folder for folder in os.listdir("tortoise/voices")]
+    speakers_list = [folder for folder in os.listdir("tortoise/voices")]
     speaker2id = {}
+
+    print(f'ZIP interval : {zip_interval}')
     
     for i, speaker in enumerate(speakers_list):
         print(f'[{i}] {speaker}')
@@ -230,29 +230,13 @@ def main(speakers_list):
             txt = line
             print(f'Retrieving line: {i}')
             generate_voice(txt, speaker)
-            if i == 50:
+            if i == 1000:
                 break
-    '''
-    with open("./configs/finetune_speaker.json", 'r', encoding='utf-8') as f:
-        hps = json.load(f)
-        
-    # modify n_speakers
-    hps['data']["n_speakers"] = len(speakers_list)
-    # overwrite speaker names
-    hps['speakers'] = speaker2id
-    # modify training params
-    hps['train']['log_interval'] = 10
-    hps['train']['eval_interval'] = 50
-    hps['train']['batch_size'] = 8
-    hps['data']['training_files'] = "./dataset/test_train.txt"
-    hps['data']['validation_files'] = "./dataset/test_val.txt"
-    # save modified config
-    with open("./configs/modified_finetune_speaker.json", 'w', encoding='utf-8') as f:
-        json.dump(hps, f, indent=2)
-    '''
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create Voice Dataset with Tortoise')
     parser.add_argument("--voicelists", nargs="+", default=["Xavier"])
+    parser.add_argument('--zip_interval', default=10, type=int)
     args = parser.parse_args()
+    zip_interval = args.zip_interval
     main(args.voicelists)
