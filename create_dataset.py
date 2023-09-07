@@ -188,6 +188,8 @@ def generate_voice(text, speaker, auto_regressive_samples=2, diffusion_iteration
     
     text = ordinal_dates(text)
     text = expand_numbers(text)
+
+    talk_text = text
     
     # talk_text = name_replacer(text)
     print(f'Speaker: {speaker}, Text: {talk_text}')
