@@ -16,6 +16,7 @@ import torch
 import torchaudio
 from text.numbers import normalize_numbers
 from num2words import num2words
+import gc
 
 print("Loading Tortoise...")
 from tortoise.api import TextToSpeech
@@ -205,6 +206,8 @@ def generate_voice(text, speaker, auto_regressive_samples=32, diffusion_iteratio
     gen = gen.squeeze(0).cpu()
     audio_array = np.array(gen.squeeze(0).cpu())
     save_dataset(audio_array, text, speaker)
+    del(audio_array)
+    gc.collect()
 
 
 def main(speakers_list):
