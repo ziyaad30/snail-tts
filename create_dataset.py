@@ -19,6 +19,10 @@ from text.numbers import normalize_numbers
 from num2words import num2words
 import gc
 
+SAMPLE_RATE = 22050
+SEED = 1234
+ZIP_INTERVAL = 0
+
 print("Loading Tortoise...")
 from tortoise.api import TextToSpeech
 from tortoise.utils.audio import load_audio, load_voice, load_voices
@@ -35,8 +39,6 @@ def phoneme_text(text, lang="en-us"):
     backend = EspeakBackend(language=lang, preserve_punctuation=True, with_stress=False, punctuation_marks=';:,.!?¡¿—…"«»“”()', language_switch='remove-flags')
     text = backend.phonemize([text], strip=True)[0]
     return text.strip()
-    
-seed = 1234
 
 def set_all_seeds(seed):
   random.seed(seed)
@@ -56,7 +58,7 @@ def zip_datset(iter):
                 zip_ref.write(file_path, arcname=os.path.relpath(file_path, name))
     
     zip_ref.close()
-    print(f'Dataset saved at : {iter} wavs')
+    print(f'Dataset saved for : {iter} wavs')
 
 def create_edit_train_file(wav_path, speaker_id, text):
     
@@ -78,9 +80,6 @@ def create_edit_train_file(wav_path, speaker_id, text):
         f.write(wav_path + '|' + text + '\n')
     
 def save_dataset(audio_array, text, speaker):
-    
-    SAMPLE_RATE = 22050
-    
     # Create speaker folder
     # if not os.path.exists(f"dataset/{speaker}"):
     #    os.makedirs(f"dataset/{speaker}")
@@ -119,7 +118,7 @@ def save_dataset(audio_array, text, speaker):
     
     create_edit_train_file(processed_path, str(speaker_id), text)
 
-    if j % zip_interval == 0:
+    if j % ZIP_INTERVAL == 0:
             zip_datset(j)
 
 tts = TextToSpeech()
@@ -127,7 +126,6 @@ if not os.path.exists(f"dataset"):
     os.makedirs(f"dataset")
 
 print("Tortoise loaded.")
-zip_interval = 0
 
 # List of (regular expression, replacement) pairs for abbreviations:
 _abbreviations = [(re.compile('\\b%s\\.' % x[0], re.IGNORECASE), x[1]) for x in [
@@ -182,7 +180,7 @@ def english_text(text):
 
 
 def generate_voice(text, speaker, auto_regressive_samples=32, diffusion_iterations=50, cond_free=True, temperature=2, top_p=0.0, length_penalty=8, repetition_penalty=4, breathing_room=20):
-    set_all_seeds(seed)
+    set_all_seeds(SEED)
     
     print(f'Speaker: {speaker}, Text: {text}')
     speaker = speaker.lower()
@@ -212,7 +210,7 @@ def main(speakers_list):
     speakers_list = [folder for folder in os.listdir("tortoise/voices")]
     speaker2id = {}
 
-    print(f'ZIP interval : {zip_interval}')
+    print(f'ZIP save interval : {ZIP_INTERVAL}')
     
     for i, speaker in enumerate(speakers_list):
         print(f'[{i}] {speaker}')
@@ -237,6 +235,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create Voice Dataset with Tortoise')
     parser.add_argument("--voicelists", nargs="+", default=["Xavier"])
     parser.add_argument('--zip_interval', default=10, type=int)
+    parser.add_argument('--sample_rate', default=22050, type=int)
     args = parser.parse_args()
-    zip_interval = args.zip_interval
+    ZIP_INTERVAL = args.zip_interval
+    SAMPLERATE = args.sample_rate
     main(args.voicelists)
