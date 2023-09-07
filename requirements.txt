@@ -11,3 +11,4 @@ librosa
 numba
 ffmpeg
 phonemizer
+num2words
