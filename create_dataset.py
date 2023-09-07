@@ -47,7 +47,7 @@ def set_all_seeds(seed):
   torch.backends.cudnn.deterministic = True
 
 def zip_datset(iter):
-    name = '/content/snail-tts/dataset'
+    name = 'snail-tts/dataset'
     zip_name = name + '.zip'
     with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zip_ref:
         for folder_name, subfolders, filenames in os.walk(name):
