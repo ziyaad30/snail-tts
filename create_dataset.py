@@ -63,12 +63,14 @@ def zip_datset(iter):
 def create_edit_train_file(wav_path, speaker_id, text):
     
     text = text.strip()
+
+    text = phoneme_text(text)
     
     with open(f"./dataset/train.txt", 'a', encoding='utf-8') as f:
-        f.write(wav_path + '|' + speaker_id + '|' + text + '\n')
+        f.write(wav_path + '|' + text + '\n')
         
     with open(f"./dataset/val.txt", 'a', encoding='utf-8') as f:
-        f.write(wav_path + '|' + speaker_id + '|' + text + '\n')
+        f.write(wav_path + '|' + text + '\n')
     '''
     wav_path = Path(wav_path).stem
     
