@@ -64,7 +64,6 @@ def create_edit_train_file(wav_path, speaker_id, text):
     
     text = text.strip()
     
-    '''
     with open(f"./dataset/train.txt", 'a', encoding='utf-8') as f:
         f.write(wav_path + '|' + speaker_id + '|' + text + '\n')
         
@@ -78,7 +77,8 @@ def create_edit_train_file(wav_path, speaker_id, text):
         
     with open(f"./dataset/hifigan_validation.txt", 'a', encoding='utf-8') as f:
         f.write(wav_path + '|' + text + '\n')
-    
+    '''
+
 def save_dataset(audio_array, text, speaker):
     # Create speaker folder
     # if not os.path.exists(f"dataset/{speaker}"):
