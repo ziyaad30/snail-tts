@@ -198,7 +198,7 @@ def generate_voice(text, speaker, auto_regressive_samples=32, diffusion_iteratio
                                     diffusion_iterations=diffusion_iterations, 
                                     cond_free=cond_free,
                                     temperature=float(temperature),
-                                    top_p=float(top_p), length_penalty=length_penalty, repetition_penalty=float(repetition_penalty), breathing_room=breathing_room, use_deterministic_seed=seed, return_deterministic_state=True)
+                                    top_p=float(top_p), length_penalty=length_penalty, repetition_penalty=float(repetition_penalty), breathing_room=breathing_room, use_deterministic_seed=SEED, return_deterministic_state=True)
     gen = gen.squeeze(0).cpu()
     audio_array = np.array(gen.squeeze(0).cpu())
     save_dataset(audio_array, text, speaker)
